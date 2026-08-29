@@ -1,19 +1,23 @@
 require('dotenv').config();
 const { sequelize, models } = require('../config/database');
 
+const adminEmail = process.env.ADMIN_EMAIL || 'admin@yourdomain.local';
+const adminPassword = process.env.ADMIN_PASSWORD || 'change_this_password';
+const adminName = process.env.ADMIN_NAME || 'System Administrator';
+
 async function seedDatabase() {
   try {
     await sequelize.authenticate();
     console.log('Database connected');
 
-    // Create default admin
+    // Create default admin using local environment values only.
     const [admin] = await models.Admin.findOrCreate({
-      where: { email: 'KenzieKenzoe' },
+      where: { email: adminEmail },
       defaults: {
-        name: 'KenzieKenzoe',
-        email: 'KenzieKenzoe',
-        password: 'koplak99',
-        phone: '08123456789',
+        name: adminName,
+        email: adminEmail,
+        password: adminPassword,
+        phone: process.env.ADMIN_PHONE || '08123456789',
         role: 'super_admin',
         isActive: true
       }
@@ -82,8 +86,8 @@ async function seedDatabase() {
 
     console.log('\n✅ Database seeded successfully!');
     console.log('\nLogin Credentials:');
-    console.log('Admin Email: KenzieKenzoe');
-    console.log('Admin Password: koplak99');
+    console.log('Admin Email: configured via ADMIN_EMAIL');
+    console.log('Admin Password: configured via ADMIN_PASSWORD');
     console.log('Karyawan Email: karyawan@pukk.com');
     console.log('Karyawan Password: karyawan123456');
 

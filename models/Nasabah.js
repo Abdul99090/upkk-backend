@@ -64,6 +64,14 @@ module.exports = (sequelize) => {
       type: DataTypes.DECIMAL(15, 2),
       defaultValue: 0
     },
+    loanType: {
+      type: DataTypes.ENUM('daily', 'weekly'),
+      defaultValue: 'daily'
+    },
+    isNewCustomer: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true
+    },
     status: {
       type: DataTypes.ENUM('active', 'inactive', 'suspended'),
       defaultValue: 'active'

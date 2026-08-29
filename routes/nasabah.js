@@ -2,6 +2,7 @@ const express = require('express');
 const { models } = require('../config/database');
 const { authenticateToken, authenticateKaryawan } = require('../middleware/auth');
 const upload = require('../middleware/upload');
+const { calculateLoanPlan, normalizeLoanAmount } = require('../services/loanRules');
 
 const router = express.Router();
 
@@ -14,7 +15,8 @@ router.post('/create', authenticateKaryawan, upload.fields([
     const {
       name, nik, phone, email, address, city, province,
       bankName, bankAccount, noRekening, qrisCode,
-      occupancy, maritalStatus, monthlyIncome, notes
+      occupancy, maritalStatus, monthlyIncome, notes,
+      loanType = 'daily', isNewCustomer = true
     } = req.body;
 
     const karyawanId = req.user.id;
@@ -35,6 +37,10 @@ router.post('/create', authenticateKaryawan, upload.fields([
       return res.status(400).json({ message: 'NIK already registered' });
     }
 
+    const normalizedMonthlyIncome = Number(monthlyIncome || 0);
+    const normalizedLoanType = ['daily', 'weekly'].includes(loanType) ? loanType : 'daily';
+    const normalizedNewCustomer = Boolean(isNewCustomer === true || isNewCustomer === 'true');
+
     const nasabah = await models.Nasabah.create({
       karyawanId,
       name,
@@ -52,7 +58,9 @@ router.post('/create', authenticateKaryawan, upload.fields([
       qrisCode: qrisCode || null,
       occupancy,
       maritalStatus,
-      monthlyIncome: monthlyIncome || 0,
+      monthlyIncome: normalizedMonthlyIncome,
+      loanType: normalizedLoanType,
+      isNewCustomer: normalizedNewCustomer,
       notes,
       status: 'active'
     });
@@ -67,10 +75,40 @@ router.post('/create', authenticateKaryawan, upload.fields([
       description: `Created nasabah: ${name}`
     });
 
+    const loanPlan = calculateLoanPlan({
+      amount: normalizeLoanAmount(200000),
+      type: normalizedLoanType,
+      isNewCustomer: normalizedNewCustomer
+    });
+
     res.status(201).json({
       message: 'Nasabah created successfully',
-      data: nasabah
+      data: {
+        ...nasabah.toJSON(),
+        loanPlan
+      }
     });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Loan calculation helper
+router.post('/loan-plan', authenticateToken, async (req, res, next) => {
+  try {
+    const { amount, type = 'daily', isNewCustomer = false } = req.body;
+
+    if (!amount) {
+      return res.status(400).json({ message: 'Amount is required' });
+    }
+
+    const plan = calculateLoanPlan({
+      amount,
+      type,
+      isNewCustomer: isNewCustomer === true || isNewCustomer === 'true'
+    });
+
+    res.json({ data: plan });
   } catch (error) {
     next(error);
   }

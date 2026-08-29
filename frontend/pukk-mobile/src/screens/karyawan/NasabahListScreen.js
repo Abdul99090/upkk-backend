@@ -4,6 +4,7 @@ import {
   View,
   FlatList,
   Text,
+  TextInput,
   TouchableOpacity,
   Image,
   ActivityIndicator,
@@ -94,11 +95,12 @@ const NasabahListScreen = ({ navigation }) => {
     <View style={styles.container}>
       <View style={styles.searchContainer}>
         <Ionicons name="search" size={20} color="#95a5a6" style={styles.searchIcon} />
-        <input
+        <TextInput
           style={styles.searchInput}
           placeholder="Cari nama atau NIK..."
           value={searchTerm}
           onChangeText={setSearchTerm}
+          placeholderTextColor="#95a5a6"
         />
       </View>
 

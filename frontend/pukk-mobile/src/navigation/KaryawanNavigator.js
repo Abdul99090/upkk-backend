@@ -6,9 +6,12 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 // Screens
 import HomeScreen from '../screens/karyawan/HomeScreen';
 import AbsensiScreen from '../screens/karyawan/AbsensiScreen';
+import AbsensiHistoryScreen from '../screens/karyawan/AbsensiHistoryScreen';
 import NasabahListScreen from '../screens/karyawan/NasabahListScreen';
+import NasabahDetailScreen from '../screens/karyawan/NasabahDetailScreen';
 import AddNasabahScreen from '../screens/karyawan/AddNasabahScreen';
 import PaymentScreen from '../screens/karyawan/PaymentScreen';
+import PaymentHistoryScreen from '../screens/karyawan/PaymentHistoryScreen';
 import WithdrawalScreen from '../screens/karyawan/WithdrawalScreen';
 import ProfileScreen from '../screens/karyawan/ProfileScreen';
 import ReportScreen from '../screens/karyawan/ReportScreen';
@@ -58,6 +61,11 @@ const AbsensiStack = () => {
         component={AbsensiScreen}
         options={{ title: 'Absensi' }}
       />
+      <Stack.Screen
+        name="AbsensiHistory"
+        component={AbsensiHistoryScreen}
+        options={{ title: 'Riwayat Absensi' }}
+      />
     </Stack.Navigator>
   );
 };
@@ -80,6 +88,11 @@ const NasabahStack = () => {
         name="NasabahListMain"
         component={NasabahListScreen}
         options={{ title: 'Daftar Nasabah' }}
+      />
+      <Stack.Screen
+        name="NasabahDetail"
+        component={NasabahDetailScreen}
+        options={{ title: 'Detail Nasabah' }}
       />
       <Stack.Screen
         name="AddNasabahModal"
@@ -111,6 +124,11 @@ const PaymentStack = () => {
         name="PaymentMain"
         component={PaymentScreen}
         options={{ title: 'Pembayaran' }}
+      />
+      <Stack.Screen
+        name="PaymentHistory"
+        component={PaymentHistoryScreen}
+        options={{ title: 'Riwayat Pembayaran' }}
       />
     </Stack.Navigator>
   );

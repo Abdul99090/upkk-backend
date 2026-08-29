@@ -10,7 +10,6 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
-  Picker,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -321,17 +320,31 @@ const AddNasabahScreen = ({ navigation }) => {
         />
 
         <Text style={styles.label}>Status Perkawinan</Text>
-        <View style={styles.pickerContainer}>
-          <Picker
-            selectedValue={formData.maritalStatus}
-            onValueChange={(value) => handleInputChange('maritalStatus', value)}
-            style={styles.picker}
-          >
-            <Picker.Item label="Lajang" value="single" />
-            <Picker.Item label="Menikah" value="married" />
-            <Picker.Item label="Cerai" value="divorced" />
-            <Picker.Item label="Janda/Duda" value="widowed" />
-          </Picker>
+        <View style={styles.segmentedContainer}>
+          {[
+            { label: 'Lajang', value: 'single' },
+            { label: 'Menikah', value: 'married' },
+            { label: 'Cerai', value: 'divorced' },
+            { label: 'Janda/Duda', value: 'widowed' },
+          ].map((option) => (
+            <TouchableOpacity
+              key={option.value}
+              style={[
+                styles.segmentButton,
+                formData.maritalStatus === option.value && styles.segmentButtonActive,
+              ]}
+              onPress={() => handleInputChange('maritalStatus', option.value)}
+            >
+              <Text
+                style={[
+                  styles.segmentText,
+                  formData.maritalStatus === option.value && styles.segmentTextActive,
+                ]}
+              >
+                {option.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
       </View>
 

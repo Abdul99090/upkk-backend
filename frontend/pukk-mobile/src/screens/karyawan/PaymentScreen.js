@@ -9,6 +9,7 @@ import {
   Alert,
   Modal,
   TextInput,
+  Image,
 } from 'react-native';
 import api from '../../services/api';
 

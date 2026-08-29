@@ -1,17 +1,16 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 const api = axios.create({
   baseURL: API_URL,
-  timeout: 10000,
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Add token to request
 api.interceptors.request.use(
   async (config) => {
     const token = await AsyncStorage.getItem('userToken');
@@ -20,32 +19,29 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Handle response errors
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    // If token expired, try to refresh
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
       try {
-        const response = await api.post('/auth/refresh-token');
-        const { token } = response.data;
+        const refreshResponse = await api.post('/auth/refresh-token');
+        const { token } = refreshResponse.data;
 
         await AsyncStorage.setItem('userToken', token);
-        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        api.defaults.headers.common.Authorization = `Bearer ${token}`;
 
         return api(originalRequest);
       } catch (refreshError) {
-        // Redirect to login
         await AsyncStorage.removeItem('userToken');
+        await AsyncStorage.removeItem('user');
+        await AsyncStorage.removeItem('userType');
         return Promise.reject(refreshError);
       }
     }

@@ -95,14 +95,14 @@ export const LoginScreen = ({ navigation }) => {
             )}
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
+          <TouchableOpacity onPress={() => Alert.alert('Info', 'Reset password akan tersedia pada tahap pengembangan berikutnya.')}>
             <Text style={styles.forgotPassword}>Lupa Password?</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>Belum punya akun? </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+          <TouchableOpacity onPress={() => Alert.alert('Info', 'Registrasi pengguna belum dibuka di mode demo ini.')}>
             <Text style={styles.registerLink}>Daftar di sini</Text>
           </TouchableOpacity>
         </View>

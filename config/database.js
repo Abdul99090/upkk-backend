@@ -28,6 +28,8 @@ const Transaksi = require('../models/Transaksi');
 const Absensi = require('../models/Absensi');
 const LokasiAbsen = require('../models/LokasiAbsen');
 const PaymentQRIS = require('../models/PaymentQRIS');
+const Pinjaman = require('../models/Pinjaman');
+const Angsuran = require('../models/Angsuran');
 const AuditLog = require('../models/AuditLog');
 const SystemUpdate = require('../models/SystemUpdate');
 
@@ -40,6 +42,8 @@ const models = {
   Absensi: Absensi(sequelize),
   LokasiAbsen: LokasiAbsen(sequelize),
   PaymentQRIS: PaymentQRIS(sequelize),
+  Pinjaman: Pinjaman(sequelize),
+  Angsuran: Angsuran(sequelize),
   AuditLog: AuditLog(sequelize),
   SystemUpdate: SystemUpdate(sequelize)
 };

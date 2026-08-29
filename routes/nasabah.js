@@ -1,8 +1,8 @@
 const express = require('express');
 const { models } = require('../config/database');
-const { authenticateToken, authenticateKaryawan } = require('../middleware/auth');
+const { authenticateToken, authenticateKaryawan, authenticateAdmin } = require('../middleware/auth');
 const upload = require('../middleware/upload');
-const { calculateLoanPlan, normalizeLoanAmount } = require('../services/loanRules');
+const { calculateLoanPlan, normalizeLoanAmount, buildSchedule } = require('../services/loanRules');
 
 const router = express.Router();
 
@@ -114,6 +114,174 @@ router.post('/loan-plan', authenticateToken, async (req, res, next) => {
     });
 
     res.json({ data: plan });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Create loan application
+router.post('/:id/pinjaman/create', authenticateKaryawan, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { amount, loanType = 'daily', isNewCustomer = false, notes } = req.body;
+
+    const nasabah = await models.Nasabah.findByPk(id);
+    if (!nasabah) {
+      return res.status(404).json({ message: 'Nasabah not found' });
+    }
+
+    if (nasabah.karyawanId !== req.user.id) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    const normalizedAmount = normalizeLoanAmount(amount);
+    const plan = calculateLoanPlan({ amount: normalizedAmount, type: loanType, isNewCustomer, startDate: new Date() });
+
+    const pinjaman = await models.Pinjaman.create({
+      nasabahId: id,
+      karyawanId: req.user.id,
+      amount: plan.amount,
+      deductionAmount: plan.deduction,
+      disbursedAmount: plan.disbursement,
+      loanType: plan.type,
+      isNewCustomer: plan.isNewCustomer,
+      totalInstallments: plan.installments,
+      installmentAmount: plan.installmentAmount,
+      status: 'pending',
+      startDate: new Date(),
+      notes: notes || 'Pengajuan pinjaman baru',
+    });
+
+    const schedule = buildSchedule(plan.type, new Date());
+
+    for (let index = 0; index < schedule.length; index += 1) {
+      await models.Angsuran.create({
+        pinjamanId: pinjaman.id,
+        nasabahId: id,
+        karyawanId: req.user.id,
+        installmentNumber: index + 1,
+        amount: plan.installmentAmount,
+        dueDate: schedule[index].date,
+        status: 'pending',
+        notes: `Angsuran ${index + 1}/${plan.installments}`
+      });
+    }
+
+    res.status(201).json({
+      message: 'Pinjaman berhasil dibuat',
+      data: {
+        pinjaman,
+        loanPlan: plan
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Approve loan by admin
+router.put('/pinjaman/:pinjamanId/approve', authenticateAdmin, async (req, res, next) => {
+  try {
+    const { pinjamanId } = req.params;
+    const pinjaman = await models.Pinjaman.findByPk(pinjamanId);
+
+    if (!pinjaman) {
+      return res.status(404).json({ message: 'Pinjaman tidak ditemukan' });
+    }
+
+    if (pinjaman.status === 'approved' || pinjaman.status === 'disbursed') {
+      return res.status(400).json({ message: 'Pinjaman sudah diproses' });
+    }
+
+    await pinjaman.update({
+      status: 'approved',
+      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+    });
+
+    res.json({
+      message: 'Pinjaman disetujui',
+      data: pinjaman
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Disburse loan by admin
+router.put('/pinjaman/:pinjamanId/disburse', authenticateAdmin, async (req, res, next) => {
+  try {
+    const { pinjamanId } = req.params;
+    const pinjaman = await models.Pinjaman.findByPk(pinjamanId);
+
+    if (!pinjaman) {
+      return res.status(404).json({ message: 'Pinjaman tidak ditemukan' });
+    }
+
+    await pinjaman.update({
+      status: 'disbursed',
+      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+    });
+
+    res.json({
+      message: 'Dana pinjaman dicairkan',
+      data: pinjaman
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// List active loans for a nasabah
+router.get('/:id/pinjaman', authenticateToken, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const nasabah = await models.Nasabah.findByPk(id);
+
+    if (!nasabah) {
+      return res.status(404).json({ message: 'Nasabah not found' });
+    }
+
+    if (req.user.type === 'karyawan' && nasabah.karyawanId !== req.user.id) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    const pinjaman = await models.Pinjaman.findAll({
+      where: { nasabahId: id },
+      order: [['createdAt', 'DESC']],
+      include: [{ model: models.Angsuran }]
+    });
+
+    res.json({ data: pinjaman });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Pay installment
+router.post('/pinjaman/:pinjamanId/angsuran/:angsuranId/pay', authenticateKaryawan, async (req, res, next) => {
+  try {
+    const { pinjamanId, angsuranId } = req.params;
+    const { paymentMethod = 'cash', notes = '' } = req.body;
+
+    const angsuran = await models.Angsuran.findOne({
+      where: { id: angsuranId, pinjamanId, karyawanId: req.user.id }
+    });
+
+    if (!angsuran) {
+      return res.status(404).json({ message: 'Angsuran tidak ditemukan' });
+    }
+
+    await angsuran.update({
+      status: 'paid',
+      paidDate: new Date(),
+      paymentMethod,
+      notes
+    });
+
+    res.json({
+      message: 'Pembayaran angsuran berhasil',
+      data: angsuran
+    });
   } catch (error) {
     next(error);
   }

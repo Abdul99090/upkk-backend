@@ -41,6 +41,10 @@ router.post('/create', authenticateKaryawan, upload.fields([
     const normalizedLoanType = ['daily', 'weekly'].includes(loanType) ? loanType : 'daily';
     const normalizedNewCustomer = Boolean(isNewCustomer === true || isNewCustomer === 'true');
 
+    if (normalizedLoanType === 'weekly' && !['true', 'false'].includes(String(isNewCustomer))) {
+      return res.status(400).json({ message: 'isNewCustomer harus true atau false' });
+    }
+
     const nasabah = await models.Nasabah.create({
       karyawanId,
       name,
@@ -78,7 +82,8 @@ router.post('/create', authenticateKaryawan, upload.fields([
     const loanPlan = calculateLoanPlan({
       amount: normalizeLoanAmount(200000),
       type: normalizedLoanType,
-      isNewCustomer: normalizedNewCustomer
+      isNewCustomer: normalizedNewCustomer,
+      startDate: new Date()
     });
 
     res.status(201).json({

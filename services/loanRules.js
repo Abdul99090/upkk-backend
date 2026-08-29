@@ -1,6 +1,6 @@
 const MIN_LOAN_AMOUNT = 200000;
 const DAILY_INSTALLMENTS = 26;
-const WEEKLY_INSTALLMENTS = 6;
+const WEEKLY_INSTALLMENTS = 5;
 const NEW_CUSTOMER_DEDUCTION_RATE = 0.10;
 
 function normalizeLoanAmount(amount) {
@@ -13,12 +13,35 @@ function normalizeLoanAmount(amount) {
   return Math.max(MIN_LOAN_AMOUNT, rounded);
 }
 
-function calculateLoanPlan({ amount, type = 'daily', isNewCustomer = false }) {
+function buildSchedule(type, startDate) {
+  const baseDate = startDate ? new Date(startDate) : new Date();
+  const installments = type === 'daily' ? DAILY_INSTALLMENTS : WEEKLY_INSTALLMENTS;
+  const result = [];
+
+  for (let index = 0; index < installments; index += 1) {
+    const current = new Date(baseDate);
+    if (type === 'daily') {
+      current.setDate(current.getDate() + index);
+    } else {
+      current.setDate(current.getDate() + (index * 7));
+    }
+
+    result.push({
+      index: index + 1,
+      date: current.toISOString(),
+      label: current.toISOString().slice(0, 10),
+    });
+  }
+
+  return result;
+}
+
+function calculateLoanPlan({ amount, type = 'daily', isNewCustomer = false, startDate = null }) {
   const normalizedAmount = normalizeLoanAmount(amount);
   const isDaily = type === 'daily';
   const installments = isDaily ? DAILY_INSTALLMENTS : WEEKLY_INSTALLMENTS;
 
-  const deduction = isNewCustomer ? normalizedAmount * NEW_CUSTOMER_DEDUCTION_RATE : 0;
+  const deduction = isNewCustomer && isDaily ? normalizedAmount * NEW_CUSTOMER_DEDUCTION_RATE : 0;
   const disbursement = normalizedAmount - deduction;
 
   const totalRepayment = normalizedAmount;
@@ -32,11 +55,12 @@ function calculateLoanPlan({ amount, type = 'daily', isNewCustomer = false }) {
     type: isDaily ? 'daily' : 'weekly',
     installments,
     installmentAmount,
-    periodLabel: isDaily ? 'harian 26 hari' : 'mingguan 6 kali',
+    periodLabel: isDaily ? 'harian 26 hari' : 'mingguan 5 kali',
     isNewCustomer,
-    notes: isNewCustomer
-      ? 'Nasabah baru dikenakan potongan 10% dari nominal pinjaman sebelum pencairan.'
-      : 'Nasabah lama tidak dikenakan potongan.'
+    schedule: buildSchedule(isDaily ? 'daily' : 'weekly', startDate),
+    notes: isNewCustomer && isDaily
+      ? 'Nasabah baru harian dikenakan potongan 10% dari nominal pinjaman sebelum pencairan.'
+      : 'Nasabah lama atau skema mingguan tidak dikenakan potongan.'
   };
 }
 
@@ -46,5 +70,6 @@ module.exports = {
   WEEKLY_INSTALLMENTS,
   NEW_CUSTOMER_DEDUCTION_RATE,
   normalizeLoanAmount,
+  buildSchedule,
   calculateLoanPlan,
 };

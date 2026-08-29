@@ -19,12 +19,12 @@ test('daily loan with new customer deducts 10% before disbursement', () => {
   assert.equal(plan.totalRepayment, 200000);
 });
 
-test('weekly loan has no deduction and six equal installments', () => {
+test('weekly loan has no deduction and five equal installments', () => {
   const plan = calculateLoanPlan({ amount: 1000000, type: 'weekly', isNewCustomer: false });
 
   assert.equal(plan.disbursement, 1000000);
   assert.equal(plan.deduction, 0);
-  assert.equal(plan.installments, 6);
-  assert.equal(plan.installmentAmount, 166666.67);
+  assert.equal(plan.installments, 5);
+  assert.equal(plan.installmentAmount, 200000);
   assert.equal(plan.totalRepayment, 1000000);
 });

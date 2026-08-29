@@ -17,7 +17,7 @@ const reportRoutes = require('./routes/report');
 const { globalErrorHandler } = require('./middleware/errorHandler');
 
 // Import services
-const { startAutoUpdateBot } = require('./services/botService');
+const { startAutoUpdateBot, startMonitoringBots } = require('./services/botService');
 const { initializeDatabase } = require('./config/database');
 
 const app = express();
@@ -70,10 +70,10 @@ async function startServer() {
     await initializeDatabase();
     console.log('Database initialized successfully');
 
-    // Start auto update bot
+    // Start bots
     if (process.env.BOT_ENABLED === 'true') {
-      startAutoUpdateBot();
-      console.log('Auto update bot started');
+      await startMonitoringBots();
+      console.log('Monitoring bots started');
     }
 
     app.listen(PORT, () => {

@@ -7,6 +7,7 @@ import AdminNavigator from './AdminNavigator';
 import KaryawanNavigator from './KaryawanNavigator';
 import NasabahNavigator from './NasabahNavigator';
 import { AuthContext } from '../context/AuthContext';
+import { resolveRoute } from '../services/navigationAssistant';
 
 const Stack = createNativeStackNavigator();
 
@@ -17,7 +18,7 @@ export const RootNavigator = () => {
     return null;
   }
 
-  const resolvedUserType = userType || user?.type || user?.role;
+  const resolvedRoute = resolveRoute({ userToken, userType, user });
 
   return (
     <NavigationContainer>
@@ -27,16 +28,15 @@ export const RootNavigator = () => {
           animationEnabled: true,
         }}
       >
-        {userToken == null ? (
-          <Stack.Screen name="Login" component={LoginScreen} />
-        ) : resolvedUserType === 'admin' ? (
+        {resolvedRoute === 'Login' && <Stack.Screen name="Login" component={LoginScreen} />}
+        {resolvedRoute === 'AdminApp' && (
           <Stack.Screen name="AdminApp" component={AdminNavigator} options={{ animationEnabled: false }} />
-        ) : resolvedUserType === 'karyawan' ? (
+        )}
+        {resolvedRoute === 'KaryawanApp' && (
           <Stack.Screen name="KaryawanApp" component={KaryawanNavigator} options={{ animationEnabled: false }} />
-        ) : resolvedUserType === 'nasabah' ? (
+        )}
+        {resolvedRoute === 'NasabahApp' && (
           <Stack.Screen name="NasabahApp" component={NasabahNavigator} options={{ animationEnabled: false }} />
-        ) : (
-          <Stack.Screen name="Login" component={LoginScreen} />
         )}
       </Stack.Navigator>
     </NavigationContainer>

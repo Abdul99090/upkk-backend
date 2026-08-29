@@ -3,6 +3,7 @@ const axios = require('axios');
 const { models } = require('../config/database');
 
 let botJob = null;
+let errorMonitorJob = null;
 
 const startAutoUpdateBot = () => {
   console.log('Starting Auto Update Bot...');
@@ -30,6 +31,12 @@ const stopAutoUpdateBot = () => {
     botJob.cancel();
     botJob = null;
     console.log('Auto Update Bot stopped');
+  }
+
+  if (errorMonitorJob) {
+    errorMonitorJob.cancel();
+    errorMonitorJob = null;
+    console.log('Error monitor bot stopped');
   }
 };
 
@@ -152,30 +159,34 @@ const logBotError = async (action, message) => {
 };
 
 const scheduleHealthCheck = async () => {
-  // Check health and resolve issues
-  schedule.scheduleJob('*/5 * * * *', async () => {
+  if (errorMonitorJob) {
+    return;
+  }
+
+  errorMonitorJob = schedule.scheduleJob('*/5 * * * *', async () => {
     try {
-      // Check for stuck transactions
       const stuckTransactions = await models.Transaksi.findAll({
-        where: {
-          status: 'pending'
-        }
+        where: { status: 'pending' }
       });
 
-      // Check payment timeouts
+      if (stuckTransactions.length > 0) {
+        console.log(`Monitoring: ${stuckTransactions.length} pending transactions found`);
+      }
+
       for (const transaction of stuckTransactions) {
         const createdTime = new Date(transaction.createdAt);
         const now = new Date();
         const diffMinutes = (now - createdTime) / (1000 * 60);
 
-        // If pending for more than 1 hour, mark as failed
         if (diffMinutes > 60) {
           await transaction.update({ status: 'failed' });
           console.log(`Transaction ${transaction.id} marked as failed due to timeout`);
+          await notifyAdmins(`Transaksi ${transaction.id} timeout dan otomatis gagal`, 'warning');
         }
       }
     } catch (error) {
       console.error('Health check error:', error);
+      await notifyAdmins(`Health check error: ${error.message}`, 'error');
     }
   });
 };
@@ -188,3 +199,11 @@ module.exports = {
   scheduleHealthCheck,
   notifyAdmins
 };
+
+const startMonitoringBots = async () => {
+  await scheduleHealthCheck();
+  startAutoUpdateBot();
+  console.log('Monitoring bots started successfully');
+};
+
+module.exports.startMonitoringBots = startMonitoringBots;

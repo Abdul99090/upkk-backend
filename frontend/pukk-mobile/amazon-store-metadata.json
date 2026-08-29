@@ -1,0 +1,22 @@
+{
+  "appName": "PUKK Mobile",
+  "packageName": "com.pukk.mobile",
+  "version": "1.0.0",
+  "category": ["BUSINESS", "FINANCE"],
+  "language": ["id", "en"],
+  "shortDescription": "Aplikasi manajemen karyawan, nasabah, absensi, dan transaksi PUKK.",
+  "longDescription": "PUKK Mobile adalah aplikasi manajemen digital untuk sistem PUKK yang memudahkan admin, karyawan, dan nasabah dalam mengelola absensi, pinjaman, pembayaran, dan monitoring transaksi secara lebih cepat, aman, dan terstruktur.",
+  "keywords": [
+    "pukk",
+    "finance",
+    "loan",
+    "employee",
+    "management",
+    "nasabah",
+    "absensi"
+  ],
+  "privacyPolicyUrl": "https://yourdomain.com/privacy-policy",
+  "supportEmail": "support@yourdomain.com",
+  "developerName": "PUKK",
+  "targetAudience": "Adults"
+}

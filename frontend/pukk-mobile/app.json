@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "PUKK Mobile",
+    "slug": "pukk-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.pukk.mobile"
+    },
+    "android": {
+      "package": "com.pukk.mobile"
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-font"
+    ]
+  }
+}
